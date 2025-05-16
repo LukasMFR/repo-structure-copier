@@ -34,14 +34,14 @@ class RepoStructureCopier {
     private async parseRepoIgnore(rootPath: string): Promise<ReturnType<typeof ignore>> {
         const ig = ignore();
         const repoignorePath = path.join(rootPath, '.repoignore');
-        
+
         try {
             const repoignoreContent = await fs.readFile(repoignorePath, 'utf8');
             ig.add(repoignoreContent);
         } catch (error) {
             vscode.window.showWarningMessage('No .repoignore file found. No files will be ignored.');
         }
-        
+
         return ig;
     }
 
@@ -49,7 +49,7 @@ class RepoStructureCopier {
         if (!this.ig) {
             return false;
         }
-        
+
         const relativePath = path.relative(rootPath, filePath);
         return this.ig.ignores(relativePath);
     }
@@ -57,15 +57,15 @@ class RepoStructureCopier {
     private async traverseDirectory(dir: string, rootPath: string = dir): Promise<string> {
         let result = '<codebase>';
         const files = await fs.readdir(dir);
-        
+
         for (const file of files) {
             const filePath = path.join(dir, file);
             const stat = await fs.stat(filePath);
-            
+
             if (this.shouldIgnore(filePath, rootPath)) {
                 continue;
             }
-            
+
             if (stat.isDirectory()) {
                 result += await this.traverseDirectory(filePath, rootPath);
             } else {
@@ -73,7 +73,7 @@ class RepoStructureCopier {
                 result += `<file><path>${filePath}</path><content>${content}</content></file>`;
             }
         }
-        
+
         result += '</codebase>';
         return result;
     }
@@ -96,4 +96,4 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(disposable);
 }
 
-export function deactivate() {}
+export function deactivate() { }
