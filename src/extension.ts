@@ -14,7 +14,27 @@ class RepoStructureCopier {
         }
 
         this.ig = await this.parseRepoIgnore(rootPath);
-        const structure = await this.traverseDirectory(rootPath);
+
+        // 1) construire l’arbre ASCII et collecter la liste des fichiers
+        const treeLines: string[] = [];
+        const files: string[] = [];
+        await this.buildTree(rootPath, rootPath, '', treeLines, files);
+        const tree = treeLines.join('\n');
+
+        // 2) pour chaque fichier : lire, numéroter les lignes et encadrer
+        const separator = '-'.repeat(80);
+        const fileBlocks = await Promise.all(files.map(async filePath => {
+            const rel = path.relative(rootPath, filePath);
+            const content = await fs.readFile(filePath, 'utf8');
+            const numbered = content
+                .split(/\r?\n/)
+                .map((line, i) => `${i + 1} | ${line}`)
+                .join('\n');
+            return `/${rel}:\n${separator}\n${numbered}\n${separator}`;
+        }));
+
+        // 3) concaténer et copier
+        const structure = `${tree}\n\n${fileBlocks.join('\n\n')}`;
         const tokenCount = this.countTokens(structure);
         const formattedTokenCount = this.formatTokenCount(tokenCount);
 
@@ -49,33 +69,45 @@ class RepoStructureCopier {
         if (!this.ig) {
             return false;
         }
-
         const relativePath = path.relative(rootPath, filePath);
         return this.ig.ignores(relativePath);
     }
 
-    private async traverseDirectory(dir: string, rootPath: string = dir): Promise<string> {
-        let result = '<codebase>';
-        const files = await fs.readdir(dir);
+    /**
+     * Parcourt récursivement `dir` en ordre alphabétique,
+     * construit les lignes d’arbre dans `tree`,
+     * et collecte les fichiers dans `files`.
+     */
+    private async buildTree(
+        dir: string,
+        rootPath: string,
+        prefix: string,
+        tree: string[],
+        files: string[]
+    ) {
+        let entries = await fs.readdir(dir);
+        entries = entries.sort();
 
-        for (const file of files) {
-            const filePath = path.join(dir, file);
-            const stat = await fs.stat(filePath);
-
-            if (this.shouldIgnore(filePath, rootPath)) {
+        for (let i = 0; i < entries.length; i++) {
+            const name = entries[i];
+            const fullPath = path.join(dir, name);
+            const rel = path.relative(rootPath, fullPath);
+            if (this.shouldIgnore(fullPath, rootPath)) {
                 continue;
             }
 
+            const stat = await fs.stat(fullPath);
+            const isLast = i === entries.length - 1;
+            const branch = isLast ? '└── ' : '├── ';
+            tree.push(prefix + branch + name);
+
             if (stat.isDirectory()) {
-                result += await this.traverseDirectory(filePath, rootPath);
+                const childPrefix = prefix + (isLast ? '    ' : '│   ');
+                await this.buildTree(fullPath, rootPath, childPrefix, tree, files);
             } else {
-                const content = await fs.readFile(filePath, 'utf8');
-                result += `<file><path>${filePath}</path><content>${content}</content></file>`;
+                files.push(fullPath);
             }
         }
-
-        result += '</codebase>';
-        return result;
     }
 
     private countTokens(text: string): number {
@@ -92,7 +124,10 @@ class RepoStructureCopier {
 
 export function activate(context: vscode.ExtensionContext) {
     const repoStructureCopier = new RepoStructureCopier();
-    let disposable = vscode.commands.registerCommand('extension.copyRepoStructure', () => repoStructureCopier.copyRepoStructure());
+    let disposable = vscode.commands.registerCommand(
+        'extension.copyRepoStructure',
+        () => repoStructureCopier.copyRepoStructure()
+    );
     context.subscriptions.push(disposable);
 }
 
