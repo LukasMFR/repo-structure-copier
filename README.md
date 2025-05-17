@@ -1,6 +1,22 @@
 # Repository Structure Copier
 
-This Visual Studio Code extension allows you to copy the structure of your repository to the clipboard, including file contents, while respecting ignore rules.
+> 🛠️ Fork maintained by **Lukas Mauffré**  
+> This is a personal fork of the original [repo-structure-copier](https://github.com/niels-hop/repo-structure-copier), with updated packaging and publishing setup.
+
+---
+
+## 📚 Table of Contents
+
+- [Features](#features)
+- [Usage](#usage)
+- [.repoignore](#repoignore)
+- [Token Count](#token-count)
+- [Requirements](#requirements)
+- [Extension Settings](#extension-settings)
+- [Known Issues](#known-issues)
+- [Tutorial (Install Manually)](#tutorial-install-manually)
+
+---
 
 ## Features
 
@@ -50,5 +66,40 @@ This extension does not add any VS Code settings.
 
 - Large repositories may take some time to process
 - Very large files might cause performance issues
+
+---
+
+## 📦 Tutorial (Install Manually)
+
+If you want to install this forked version manually:
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/lukasmfr/repo-structure-copier.git
+cd repo-structure-copier
+````
+
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Build and package the extension
+
+```bash
+vsce package
+```
+
+You’ll get a file like `repo-structure-copier-lukas-1.0.4.vsix`.
+
+### 4. Install the extension in VS Code
+
+```bash
+code --install-extension repo-structure-copier-lukas-1.0.4.vsix
+```
+
+---
 
 **Enjoy!**
