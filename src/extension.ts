@@ -78,10 +78,38 @@ class RepoStructureCopier {
 
         const repoignorePath = path.join(rootPath, '.repoignore');
         try {
+            // Si .repoignore existe, on l'ajoute
             const repoignoreContent = await fs.readFile(repoignorePath, 'utf8');
             ig.add(repoignoreContent);
-        } catch (error) {
-            vscode.window.showWarningMessage('No .repoignore file found. No files will be ignored (except .git & .DS_Store).');
+        } catch {
+            // Sinon, on le crée avec les defaults
+            const defaultIgnore = [
+                'node_modules',
+                '*.log',
+                '.vscode',
+                ''
+            ].join('\n');
+            await fs.writeFile(repoignorePath, defaultIgnore, 'utf8');
+            ig.add(defaultIgnore);
+            vscode.window.showInformationMessage('Created .repoignore with default entries.');
+
+            // Ajouter .repoignore dans .gitignore
+            const gitignorePath = path.join(rootPath, '.gitignore');
+            try {
+                let gitignoreContent = await fs.readFile(gitignorePath, 'utf8');
+                if (!gitignoreContent.includes('.repoignore')) {
+                    // veille à avoir une ligne vide avant d'ajouter
+                    if (!gitignoreContent.endsWith('\n')) {
+                        gitignoreContent += '\n';
+                    }
+                    gitignoreContent += '.repoignore\n';
+                    await fs.writeFile(gitignorePath, gitignoreContent, 'utf8');
+                }
+            } catch {
+                // pas de .gitignore ? On le crée juste avec .repoignore
+                await fs.writeFile(gitignorePath, '.repoignore\n', 'utf8');
+            }
+            vscode.window.showInformationMessage('Added .repoignore to .gitignore.');
         }
 
         return ig;
@@ -98,7 +126,7 @@ class RepoStructureCopier {
     /**
      * Parcourt récursivement `dir` en ordre alphabétique,
      * construit les lignes d’arborescence dans `treeLines`,
-     * et collecte dans `files` uniquement les fichiers **non** exclus.
+     * et collecte dans `files` uniquement les fichiers non exclus.
      */
     private async buildTree(
         dir: string,
@@ -124,15 +152,14 @@ class RepoStructureCopier {
             const isLast = i === entries.length - 1;
             const branch = isLast ? '└── ' : '├── ';
 
-            // 1) on affiche toujours dans l'arborescence
+            // Toujours afficher dans l’arborescence
             treeLines.push(prefix + branch + name);
 
             if (stat.isDirectory()) {
-                // 2) si dossier, on descend
                 const childPrefix = prefix + (isLast ? '    ' : '│   ');
                 await this.buildTree(fullPath, rootPath, childPrefix, treeLines, files);
             } else {
-                // 3) si fichier, on l'ajoute *seulement* s'il n'est pas exclu
+                // Ajouter aux fichiers si non exclus
                 if (!this.excludedExtensions.has(ext)) {
                     files.push(fullPath);
                 }
