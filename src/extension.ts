@@ -7,6 +7,24 @@ import ignore from 'ignore';
 class RepoStructureCopier {
     private ig: ReturnType<typeof ignore> | null = null;
 
+    /** Extensions que l’on souhaite systématiquement exclure */
+    private excludedExtensions: Set<string> = new Set([
+        // Images
+        '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.ico', '.tiff', '.webp',
+        // Polices
+        '.woff', '.woff2', '.ttf', '.otf', '.eot',
+        // Audio
+        '.mp3', '.wav', '.flac', '.aac', '.ogg', '.m4a',
+        // Vidéo
+        '.mp4', '.avi', '.mov', '.mkv', '.wmv', '.webm', '.flv',
+        // Archives
+        '.zip', '.rar', '.7z', '.tar', '.gz', '.tgz',
+        // Documents binaires
+        '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
+        // Binaires / bytecode
+        '.exe', '.dll', '.so', '.bin', '.class', '.jar'
+    ]);
+
     async copyRepoStructure() {
         const rootPath = this.getRootPath();
         if (!rootPath) {
@@ -55,6 +73,7 @@ class RepoStructureCopier {
     private async parseRepoIgnore(rootPath: string): Promise<ReturnType<typeof ignore>> {
         const ig = ignore();
 
+        // exclusions par défaut
         ig.add(['.git', '.DS_Store']);
 
         const repoignorePath = path.join(rootPath, '.repoignore');
@@ -79,7 +98,7 @@ class RepoStructureCopier {
     /**
      * Parcourt récursivement `dir` en ordre alphabétique,
      * construit les lignes d’arbre dans `tree`,
-     * et collecte les fichiers dans `files`.
+     * et collecte les fichiers (textuels) dans `files`.
      */
     private async buildTree(
         dir: string,
@@ -100,6 +119,13 @@ class RepoStructureCopier {
             }
 
             const stat = await fs.stat(fullPath);
+            const ext = path.extname(name).toLowerCase();
+
+            // exclure les fichiers dont l'extension est dans notre liste
+            if (!stat.isDirectory() && this.excludedExtensions.has(ext)) {
+                continue;
+            }
+
             const isLast = i === entries.length - 1;
             const branch = isLast ? '└── ' : '├── ';
             tree.push(prefix + branch + name);
