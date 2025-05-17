@@ -1,12 +1,12 @@
 {
-  "name": "repo-structure-copier",
-  "displayName": "Codebase Structure Copier",
+  "name": "repo-structure-copier-lukas",
+  "displayName": "Codebase Structure Copier (Lukas)",
   "description": "Extension to copy the full code repository structure to clipboard for use in LLMs",
-  "version": "1.0.3",
-  "publisher": "NielsHop",
+  "version": "1.0.4",
+  "publisher": "lukasmauffre",
   "repository": {
     "type": "git",
-    "url": "https://github.com/niels-hop/repo-structure-copier"
+    "url": "https://github.com/lukasmfr/repo-structure-copier"
   },
   "license": "MIT",
   "engines": {
@@ -55,15 +55,14 @@
     "watch": "npm-run-all -p watch:*",
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
-    "package": "npm run check-types && npm run lint && node esbuild.js --production",
+    "package": "npm run check-types && npm run lint && node esbuild.js --production && npm run copy-wasm",
     "compile-tests": "tsc -p . --outDir out",
     "watch-tests": "tsc -p . -w --outDir out",
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
     "test": "vscode-test",
-    "copy-wasm": "cp node_modules/tiktoken/tiktoken_bg.wasm dist/",
-    "package": "npm run check-types && npm run lint && node esbuild.js --production && npm run copy-wasm"
+    "copy-wasm": "cp node_modules/tiktoken/tiktoken_bg.wasm dist/"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.7",
@@ -81,6 +80,6 @@
   "dependencies": {
     "tiktoken": "^1.0.16"
   },
-  "author": "Niels Hop",
+  "author": "Lukas Mauffré",
   "changelog": "CHANGELOG.md"
 }
