@@ -26,9 +26,10 @@ class RepoStructureCopier {
         const fileBlocks = await Promise.all(files.map(async filePath => {
             const rel = path.relative(rootPath, filePath);
             const content = await fs.readFile(filePath, 'utf8');
-            const numbered = content
-                .split(/\r?\n/)
-                .map((line, i) => `${i + 1} | ${line}`)
+            const lines = content.split(/\r?\n/);
+            const width = String(lines.length).length;
+            const numbered = lines
+                .map((line, i) => `${String(i + 1).padStart(width, ' ')} | ${line}`)
                 .join('\n');
             return `/${rel}:\n${separator}\n${numbered}\n${separator}`;
         }));
