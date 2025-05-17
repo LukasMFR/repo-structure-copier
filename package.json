@@ -2,7 +2,7 @@
   "name": "repo-structure-copier-lukas",
   "displayName": "Codebase Structure Copier (Lukas)",
   "description": "Extension to copy the full code repository structure to clipboard for use in LLMs",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "publisher": "lukasmauffre",
   "repository": {
     "type": "git",
