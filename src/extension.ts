@@ -54,13 +54,15 @@ class RepoStructureCopier {
 
     private async parseRepoIgnore(rootPath: string): Promise<ReturnType<typeof ignore>> {
         const ig = ignore();
-        const repoignorePath = path.join(rootPath, '.repoignore');
 
+        ig.add(['.git', '.DS_Store']);
+
+        const repoignorePath = path.join(rootPath, '.repoignore');
         try {
             const repoignoreContent = await fs.readFile(repoignorePath, 'utf8');
             ig.add(repoignoreContent);
         } catch (error) {
-            vscode.window.showWarningMessage('No .repoignore file found. No files will be ignored.');
+            vscode.window.showWarningMessage('No .repoignore file found. No files will be ignored (except .git & .DS_Store).');
         }
 
         return ig;
