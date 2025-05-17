@@ -25,6 +25,25 @@ class RepoStructureCopier {
         '.exe', '.dll', '.so', '.bin', '.class', '.jar'
     ]);
 
+    /** Noms de fichiers/dossiers à inclure dans la liste .repoignore par défaut */
+    private excludedNames: Set<string> = new Set([
+        '.git',
+        '.gitignore',
+        '.gitmodules',
+        'node_modules',
+        'dist',
+        'build',
+        'out',
+        'coverage',
+        '.idea',
+        '.vscode',
+        '.DS_Store',
+        '.env',
+        '.env.local',
+        '*.log',
+        '*.tmp'
+    ]);
+
     async copyRepoStructure() {
         const rootPath = this.getRootPath();
         if (!rootPath) {
@@ -82,13 +101,8 @@ class RepoStructureCopier {
             const repoignoreContent = await fs.readFile(repoignorePath, 'utf8');
             ig.add(repoignoreContent);
         } catch {
-            // Sinon, on le crée avec les defaults
-            const defaultIgnore = [
-                'node_modules',
-                '*.log',
-                '.vscode',
-                ''
-            ].join('\n');
+            // Sinon, on le crée avec les valeurs de excludedNames
+            const defaultIgnore = Array.from(this.excludedNames).join('\n') + '\n';
             await fs.writeFile(repoignorePath, defaultIgnore, 'utf8');
             ig.add(defaultIgnore);
             vscode.window.showInformationMessage('Created .repoignore with default entries.');
@@ -98,7 +112,6 @@ class RepoStructureCopier {
             try {
                 let gitignoreContent = await fs.readFile(gitignorePath, 'utf8');
                 if (!gitignoreContent.includes('.repoignore')) {
-                    // veille à avoir une ligne vide avant d'ajouter
                     if (!gitignoreContent.endsWith('\n')) {
                         gitignoreContent += '\n';
                     }
@@ -106,7 +119,7 @@ class RepoStructureCopier {
                     await fs.writeFile(gitignorePath, gitignoreContent, 'utf8');
                 }
             } catch {
-                // pas de .gitignore ? On le crée juste avec .repoignore
+                // Pas de .gitignore ? On le crée juste avec .repoignore
                 await fs.writeFile(gitignorePath, '.repoignore\n', 'utf8');
             }
             vscode.window.showInformationMessage('Added .repoignore to .gitignore.');
