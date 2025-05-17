@@ -30,6 +30,7 @@ class RepoStructureCopier {
         '.git',
         '.gitignore',
         '.gitmodules',
+        '.repoignore',
         'node_modules',
         'dist',
         'build',
