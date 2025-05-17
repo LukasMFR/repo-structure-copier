@@ -7,7 +7,7 @@ import ignore from 'ignore';
 class RepoStructureCopier {
     private ig: ReturnType<typeof ignore> | null = null;
 
-    /** Extensions que l’on souhaite systématiquement exclure */
+    /** Extensions que l’on souhaite systématiquement exclure du contenu */
     private excludedExtensions: Set<string> = new Set([
         // Images
         '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.ico', '.tiff', '.webp',
@@ -97,14 +97,14 @@ class RepoStructureCopier {
 
     /**
      * Parcourt récursivement `dir` en ordre alphabétique,
-     * construit les lignes d’arbre dans `tree`,
-     * et collecte les fichiers (textuels) dans `files`.
+     * construit les lignes d’arborescence dans `treeLines`,
+     * et collecte dans `files` uniquement les fichiers **non** exclus.
      */
     private async buildTree(
         dir: string,
         rootPath: string,
         prefix: string,
-        tree: string[],
+        treeLines: string[],
         files: string[]
     ) {
         let entries = await fs.readdir(dir);
@@ -114,27 +114,28 @@ class RepoStructureCopier {
             const name = entries[i];
             const fullPath = path.join(dir, name);
             const rel = path.relative(rootPath, fullPath);
+
             if (this.shouldIgnore(fullPath, rootPath)) {
                 continue;
             }
 
             const stat = await fs.stat(fullPath);
             const ext = path.extname(name).toLowerCase();
-
-            // exclure les fichiers dont l'extension est dans notre liste
-            if (!stat.isDirectory() && this.excludedExtensions.has(ext)) {
-                continue;
-            }
-
             const isLast = i === entries.length - 1;
             const branch = isLast ? '└── ' : '├── ';
-            tree.push(prefix + branch + name);
+
+            // 1) on affiche toujours dans l'arborescence
+            treeLines.push(prefix + branch + name);
 
             if (stat.isDirectory()) {
+                // 2) si dossier, on descend
                 const childPrefix = prefix + (isLast ? '    ' : '│   ');
-                await this.buildTree(fullPath, rootPath, childPrefix, tree, files);
+                await this.buildTree(fullPath, rootPath, childPrefix, treeLines, files);
             } else {
-                files.push(fullPath);
+                // 3) si fichier, on l'ajoute *seulement* s'il n'est pas exclu
+                if (!this.excludedExtensions.has(ext)) {
+                    files.push(fullPath);
+                }
             }
         }
     }
