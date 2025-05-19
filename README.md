@@ -92,12 +92,13 @@ npm install
 vsce package
 ```
 
-You’ll get a file like `repo-structure-copier-lukas-1.0.4.vsix`.
+> This will generate a file like `repo-structure-copier-lukas-1.0.X.vsix`
+> (where `X` is the current version number)
 
 ### 4. Install the extension in VS Code
 
 ```bash
-code --install-extension repo-structure-copier-lukas-1.0.4.vsix
+code --install-extension repo-structure-copier-lukas-1.0.X.vsix
 ```
 
 ---
